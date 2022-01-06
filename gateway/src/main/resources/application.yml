@@ -1,0 +1,37 @@
+server:
+  port: 8081
+
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8080/eureka
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      # see https://cloud.spring.io/spring-cloud-gateway/reference/html/#the-rewritepath-gatewayfilter-factory
+      routes:
+      - id: authentication-service
+        uri: lb://authentication-service/
+        predicates:
+        - Path=/auth/**
+        filters:
+        - RewritePath=/auth/(?<segment>.*), /${segment}
+      - id: foobar-service
+        uri: lb://foobar-service/
+        predicates:
+        - Path=/foobar/**
+        filters:
+        - RewritePath=/foobar/(?<segment>.*), /${segment}
+
+management:
+  endpoint:
+    gateway:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: '*'
