@@ -1,5 +1,6 @@
 package com.microservice.arch.authenticationservice.controller
 
+import com.microservice.arch.authenticationservice.repository.ApiKeyRepositoryStub
 import com.microservice.arch.authenticationservice.repository.UserRepository
 import com.microservice.arch.authenticationservice.service.JwtParseException
 import com.microservice.arch.authenticationservice.service.JwtService
@@ -10,7 +11,6 @@ import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.context.request.WebRequest
 import javax.servlet.http.HttpServletRequest
@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest
 @RestController
 class AuthenticationController(
     private val userRepository: UserRepository,
+    private val apiKeyRepositoryStub: ApiKeyRepositoryStub,
     private val jwtService: JwtService
 ) {
 
@@ -45,7 +46,6 @@ class AuthenticationController(
     @GetMapping("/user-info")
     fun userInfo(request: HttpServletRequest): ResponseEntity<UserInformationDto> {
         val jwt = request.getHeader("Authorization").substring("Bearer ".length)
-            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null)
         return jwtService
             .extractUserFromJwt(jwt).let {
                 ResponseEntity.ok(
@@ -53,10 +53,20 @@ class AuthenticationController(
                 )
             }
     }
+
+    @GetMapping("/api-key-info")
+    fun apiKeyInfo(request: HttpServletRequest): ResponseEntity<ApiKeyInformationDto> {
+        val apiKeyStr = request.getHeader("X-API-KEY")
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null)
+        return apiKeyRepositoryStub.validate(apiKeyStr).let {
+            ResponseEntity.ok(ApiKeyInformationDto(it))
+        }
+    }
 }
 
 data class UserPasswordDto(var username: String, var password: String)
 data class UserInformationDto(val username: String, val authorities: Set<String>)
+data class ApiKeyInformationDto(val authorities: Set<String>)
 
 @ControllerAdvice
 class ExceptionControllerAdvice {

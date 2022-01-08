@@ -34,7 +34,7 @@ class FooBarController {
     }
 
     @GetMapping("/admin")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_API_KEY')")
     fun admin(): String {
         return "Admin restricted"
     }

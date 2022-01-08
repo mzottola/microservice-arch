@@ -9,9 +9,16 @@ import org.springframework.web.bind.annotation.RequestMethod
 interface AuthenticationService {
     @RequestMapping(value = ["/user-info"], method = [RequestMethod.GET])
     fun findUser(@RequestHeader("Authorization") jwt: String): UserDto
+
+    @RequestMapping(value = ["/api-key-info"], method = [RequestMethod.GET])
+    fun findApiKeyAuthorities(@RequestHeader("X-API-KEY") apiKey: String): ApiKeyInformationDto
 }
 
 data class UserDto(
     val username: String,
+    val authorities: Set<String>
+)
+
+data class ApiKeyInformationDto(
     val authorities: Set<String>
 )
