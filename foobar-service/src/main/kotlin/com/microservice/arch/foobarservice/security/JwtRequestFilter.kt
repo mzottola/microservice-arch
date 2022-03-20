@@ -21,17 +21,27 @@ class JwtRequestFilter(
         filterChain: FilterChain
     ) {
         val header = request.getHeader("Authorization")
-        println("Jwt : $header")
-        if (header == null) {
+        val apiKey = request.getHeader("X-API-KEY")
+        if (header == null && apiKey == null) {
             response.status = HttpStatus.UNAUTHORIZED.value()
         } else {
-            val userDto = authenticationService.findUser(header)
-            SecurityContextHolder.getContext().authentication =
-                UsernamePasswordAuthenticationToken(
-                    userDto.username,
-                    null,
-                    userDto.authorities.map { SimpleGrantedAuthority(it) }
-                )
+            if (header != null) {
+                val userDto = authenticationService.findUser(header)
+                SecurityContextHolder.getContext().authentication =
+                    UsernamePasswordAuthenticationToken(
+                        userDto.username,
+                        null,
+                        userDto.authorities.map { SimpleGrantedAuthority(it) }
+                    )
+            } else {
+                val apiKeyAuthorities = authenticationService.findApiKeyAuthorities(apiKey)
+                SecurityContextHolder.getContext().authentication =
+                    UsernamePasswordAuthenticationToken(
+                        null,
+                        null,
+                        apiKeyAuthorities.authorities.map { SimpleGrantedAuthority(it) }
+                    )
+            }
         }
         filterChain.doFilter(request, response)
     }

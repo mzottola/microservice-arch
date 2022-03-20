@@ -20,10 +20,25 @@ class GatewayGlobalFilter : GlobalFilter, Ordered {
         }
         val path = request.path.toString()
 
-        if (path.startsWith("/auth")) {
+        if (path.startsWith("/auth/login")) {
             return chain!!.filter(exchange)
         }
 
+        if (request.headers.getOrEmpty("X-API-KEY").isNotEmpty()) {
+            return WebClient
+                .create("http://localhost:8083/")
+                .get()
+                .uri("/api-key-info")
+                .accept(MediaType.APPLICATION_JSON)
+                .headers { httpHeaders -> httpHeaders.addAll(request.headers)}
+                .exchangeToMono {
+                    if (it.statusCode() != HttpStatus.OK) {
+                        exchange.response.statusCode = HttpStatus.UNAUTHORIZED
+                        return@exchangeToMono exchange.response.setComplete()
+                    }
+                    chain!!.filter(exchange)
+                }
+        }
         return WebClient
             .create("http://localhost:8083/")
             .get()
