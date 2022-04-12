@@ -1,5 +1,9 @@
 # Readme
 
+PR
+fd
+dd
+
 4 applications are created:
 * discovery-service: every application registers to it
 * gateway: unique point to access other application
